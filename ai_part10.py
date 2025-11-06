@@ -66,20 +66,27 @@ def fix_code(input_code):
 
     # --- 構文チェックとAIの応答判断 ---
     if initial_needs_fix:
-        # 修正版が正しいPythonコードなら採用
+        # 入力コードに修正が必要な場合
         if is_valid_python(extracted_code):
+            # AIが返したコードが有効なら、それを採用
             return extracted_code
         else:
+            # AIが返したコードも無効なら、修正失敗
             return f"⚠️ 修正が必要ですが、AIが正しく修正できませんでした。\n\nAIの応答:\n{raw_output}"
     else:
-        # 修正不要のとき
+        # 入力コードが元々正しい場合
         if raw_output.strip() == "✅ 正常に実行できます":
+            # AIが「正常に実行できます」と返した場合
             return "✅ 正常に実行できます"
-        elif is_valid_python(extracted_code):
-            # AIがなぜかコードを返した場合（本来は不要な場合）
-            # ここではAIが修正不要と判断せずコードを返したとみなし、そのコードが有効なら採用
+        elif is_valid_python(extracted_code) and extracted_code.strip() == input_code.strip():
+            # AIがコードブロックを返したが、それが元のコードと完全に一致する場合（これも正常とみなす）
+            return "✅ 正常に実行できます"
+        elif is_valid_python(extracted_code) and extracted_code.strip() != input_code.strip():
+            # AIがコードブロックを返したが、元のコードと異なり、かつ有効なコードの場合
+            # これはAIが意図せず修正を提案したケースだが、修正版として返す
             return extracted_code
         else:
+            # AIの出力が「正常に実行できます」でもなく、有効なコードでもない場合
             return f"⚠️ 予期しない出力が発生しました。修正は不要と判断されましたが、AIの出力が不明確です。\n\nAIの応答:\n{raw_output}"
 
 # --- Gradio UI設定 ---
